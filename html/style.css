@@ -1,0 +1,18 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+}
+
+.right {
+    width: 70%;
+    background-color: aqua;
+    height: 100%;
+}
+
+.left {
+    width: 30%;
+    background-color: blueviolet;
+    height: 100%;
+}
