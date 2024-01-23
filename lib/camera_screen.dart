@@ -1,87 +1,99 @@
-// ignore_for_file: prefer_const_constructors, use_build_context_synchronously, avoid_print, library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, prefer_const_constructors
+
+import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_textlens_app/TextExtractionPage.dart';
+import 'package:flutter_textlens_app/home_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class CameraScreen extends StatefulWidget {
+class SplashScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
 
-  const CameraScreen({Key? key, required this.cameras}) : super(key: key);
+  const SplashScreen({Key? key, required this.cameras}) : super(key: key);
 
   @override
-  _CameraScreenState createState() => _CameraScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
-  late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _offsetAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.cameras.isNotEmpty) {
-      _controller = CameraController(
-        widget.cameras[0],
-        ResolutionPreset.max,
-        enableAudio: false, // Disable audio if not needed
-      );
-      _initializeControllerFuture = _initializeController();
-    } else {
-      // Gérer le cas où la liste des caméras est vide, par exemple, afficher un message d'erreur.
-      print('Aucune caméra disponible.');
-    }
-  }
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
 
-  Future<void> _initializeController() async {
-    try {
-      await _controller.initialize();
-    } catch (e) {
-      print('Erreur lors de l\'initialisation du contrôleur de caméra : $e');
-    }
-  }
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset(0, 30),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _animationController.forward();
+
+    Timer(
+      Duration(seconds: 5),
+      () => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(cameras: widget.cameras),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Camera')),
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        // Modifiez la partie onPressed dans CameraScreen.dart
-
-        onPressed: () async {
-          try {
-            await _initializeControllerFuture;
-            XFile image = await _controller.takePicture();
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      TextExtractionPage(imagePath: image.path)),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: _offsetAnimation.value,
+              child: Opacity(
+                opacity: _opacityAnimation.value,
+                child: Text(
+                  "Text Snap!",
+                  style: GoogleFonts.satisfy(
+                    fontSize: 50,
+                    fontWeight: FontWeight.bold,
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                  ),
+                ),
+              ),
             );
-          } catch (e) {
-            print(e);
-          }
-        },
-
-        child: Icon(Icons.camera),
+          },
+        ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 }

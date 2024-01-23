@@ -5,8 +5,6 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_textlens_app/home_screen.dart';
-// ignore: unused_import
-import 'package:flutter_textlens_app/main.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -18,12 +16,26 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
   @override
   void initState() {
     super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: ),
+    );
+
+    _animation = Tween<double>(begin: 0, end: 1).animate(_animationController);
+
+    _animationController.forward();
+
     Timer(
-      Duration(seconds: 2), // Réglez la durée du splash screen
+      Duration(seconds: 5),
       () => Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -34,17 +46,31 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text(
-                  "Text Snap!",
-                  style: GoogleFonts.satisfy(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.lightBlueAccent,
-                  ),
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _animation.value,
+              child: Text(
+                "Text Snap!",
+                style: GoogleFonts.satisfy(
+                  fontSize: 50 * _animation.value,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.lightBlueAccent,
                 ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

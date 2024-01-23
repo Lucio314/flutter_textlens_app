@@ -3,7 +3,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_textlens_app/splash_screen.dart';
-import 'camera_screen.dart';
+import 'package:flutter_textlens_app/camera_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
