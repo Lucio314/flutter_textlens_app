@@ -24,7 +24,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (widget.cameras.isNotEmpty) {
       _controller = CameraController(
         widget.cameras[0],
-        ResolutionPreset.medium,
+        ResolutionPreset.max,
         enableAudio: false, // Disable audio if not needed
       );
       _initializeControllerFuture = _initializeController();

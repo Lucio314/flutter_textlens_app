@@ -8,12 +8,14 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 class TextExtractionPage extends StatelessWidget {
   final String imagePath;
 
-  const TextExtractionPage({Key? key, required this.imagePath}) : super(key: key);
+  const TextExtractionPage({Key? key, required this.imagePath})
+      : super(key: key);
 
   Future<String> extractText() async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = GoogleMlKit.vision.textRecognizer();
-    final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+    final RecognizedText recognizedText =
+        await textRecognizer.processImage(inputImage);
 
     String extractedText = '';
     for (TextBlock block in recognizedText.blocks) {
