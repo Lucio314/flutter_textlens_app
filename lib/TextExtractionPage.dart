@@ -1,39 +1,19 @@
-// Nouveau fichier text_extraction_page.dart
-
-// ignore_for_file: file_names, prefer_interpolation_to_compose_strings, prefer_const_constructors, library_private_types_in_public_api
+// ignore_for_file: file_names, prefer_const_constructors, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:share/share.dart';
+import 'package:translator/translator.dart';
 
-class TextExtractionPage extends StatefulWidget {
+class TextExtractionPage extends StatelessWidget {
   final String imagePath;
 
   const TextExtractionPage({Key? key, required this.imagePath})
       : super(key: key);
 
-  @override
-  _TextExtractionPageState createState() => _TextExtractionPageState();
-}
-
-class _TextExtractionPageState extends State<TextExtractionPage> {
-  late TextEditingController _textEditingController;
-  late Future<String> _textExtractionFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _textEditingController = TextEditingController();
-    _textExtractionFuture = extractText();
-  }
-
-  @override
-  void dispose() {
-    _textEditingController.dispose();
-    super.dispose();
-  }
-
   Future<String> extractText() async {
-    final inputImage = InputImage.fromFilePath(widget.imagePath);
+    final inputImage = InputImage.fromFilePath(imagePath);
     final textRecognizer = GoogleMlKit.vision.textRecognizer();
     final RecognizedText recognizedText =
         await textRecognizer.processImage(inputImage);
@@ -41,7 +21,7 @@ class _TextExtractionPageState extends State<TextExtractionPage> {
     String extractedText = '';
     for (TextBlock block in recognizedText.blocks) {
       for (TextLine line in block.lines) {
-        extractedText += line.text + '\n';
+        extractedText += '${line.text}\n';
       }
     }
 
@@ -50,27 +30,88 @@ class _TextExtractionPageState extends State<TextExtractionPage> {
     return extractedText;
   }
 
+  Future<String> translateText(String text, String targetLanguage) async {
+    final translator = GoogleTranslator();
+    final translation =
+        await translator.translate(text, from: 'auto', to: targetLanguage);
+    return translation.text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Text Extraction')),
+      appBar: AppBar(
+        title: Text('Text Extraction'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.copy),
+            onPressed: () async {
+              final text = await extractText();
+              Clipboard.setData(ClipboardData(text: text));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Texte copié dans le presse-papiers')),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () async {
+              final text = await extractText();
+              Share.share(text);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.translate),
+            onPressed: () async {
+              final text = await extractText();
+              final translatedText = await translateText(text, 'fr'); // Remplacez 'fr' par la langue cible souhaitée
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Texte traduit'),
+                    content: Text(translatedText),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('OK'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder<String>(
-        future: _textExtractionFuture,
+        future: extractText(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            _textEditingController.text = snapshot.data ?? '';
             return Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _textEditingController,
-                maxLines: null, // Permet un nombre illimité de lignes.
-                expands:
-                    true, // Fait en sorte que le champ de texte s'étende sur toute la hauteur disponible.
-                textAlignVertical:
-                    TextAlignVertical.top, // Alignement du texte en haut.
-                decoration: InputDecoration(
-                  hintText: 'Éditez le texte extrait...',
-                  border: OutlineInputBorder(),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: 200.0, // Ajustez la hauteur maximale selon vos besoins
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(
+                    color: Colors.blue,
+                    width: 2.0,
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      snapshot.data ?? 'Aucun texte extrait.',
+                      style: TextStyle(fontSize: 18.0),
+                    ),
+                  ),
                 ),
               ),
             );
